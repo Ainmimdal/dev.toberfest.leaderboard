@@ -194,7 +194,7 @@ export default function Home() {
                     </Step>
                   </ProgressBar>
                 </Td>
-                <Td>{user.checkpoint}</Td>
+                <Td>{user.lap}</Td>
                 <Td>{user.timestamp}</Td>
               </Tr>
             ))}
