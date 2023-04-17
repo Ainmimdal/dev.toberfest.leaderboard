@@ -2,9 +2,9 @@
   "name": "rfid.race.leaderboard",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
+    "dev": "cross-env NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -12,6 +12,9 @@
     "@chakra-ui/react": "^1.6.12",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
+    "@fontsource/open-sans": "^4.5.14",
+    "@fontsource/play": "^4.5.12",
+    "@formkit/auto-animate": "^1.0.0-beta.6",
     "@octokit/rest": "^18.12.0",
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
@@ -24,11 +27,15 @@
     "react-flip-move": "^3.0.5",
     "react-flip-toolkit": "^7.0.17",
     "react-step-progress-bar": "^1.0.3",
-    "swr": "^1.0.1"
+    "swr": "^1.0.1",
+    "tailwindcss": "^3.3.1",
+    "yarn": "^1.22.19"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.14",
     "eslint": "7",
     "eslint-config-next": "12.0.2",
-    "eslint-config-prettier": "^8.3.0"
+    "eslint-config-prettier": "^8.3.0",
+    "postcss": "^8.4.21"
   }
 }
