@@ -5,6 +5,11 @@ const config = {
   useSystemColorMode: false,
 }
 
-const theme = extendTheme({ config })
+const theme = extendTheme({ 
+  fonts: {
+    heading: `'Play', sans-serif`,
+    body: `'Play', sans-serif`,
+  },
+ })
 
 export default theme

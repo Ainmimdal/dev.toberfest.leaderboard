@@ -1,7 +1,8 @@
 import React, { Suspense, useEffect, useState } from "react";
 import useSWR from 'swr'
 import Head from 'next/head'
-import { Button, Link, RadioGroup, Radio, Stack } from '@chakra-ui/react'
+import { Center, Button, Link, RadioGroup, Radio, ChakraProvider } from '@chakra-ui/react'
+import { Stack, HStack, VStack } from '@chakra-ui/react'
 import { ExternalLinkIcon } from '@chakra-ui/icons'
 import { Spinner } from '@chakra-ui/react'
 import { Image } from '@chakra-ui/react'
@@ -9,19 +10,16 @@ import { Text } from '@chakra-ui/react'
 import { Divider } from '@chakra-ui/react'
 import { Table, Thead, Tbody, Tfoot, Tr, Th, Td, TableCaption } from '@chakra-ui/react'
 import { IconButton } from '@chakra-ui/react'
-import { MoonIcon, SunIcon } from '@chakra-ui/icons'
+import { MoonIcon, SunIcon, CheckCircleIcon } from '@chakra-ui/icons'
 import { useColorMode } from '@chakra-ui/react'
 import styles from '../styles/Home.module.css'
 import FlipMove from "react-flip-move";
 import { FirebaseApp } from "firebase/app";
-import { initializeApp } from "firebase/app";
+import { initializeApp, increment, firebase } from "firebase/app";
 import { getDatabase, ref, query, orderByChild, onValue, orderByValue, set } from "firebase/database";
-import { AnimatePresence, motion } from "framer-motion";
+import { useAutoAnimate } from '@formkit/auto-animate/react'
 import "react-step-progress-bar/styles.css";
-import { ProgressBar } from "react-step-progress-bar";
-
-
-
+import { ProgressBar, Step } from "react-step-progress-bar";
 
 // // TODO: Replace the following with your app's Firebase project configuration
 // // See: https://firebase.google.com/docs/web/learn-more#config-object
@@ -49,25 +47,16 @@ const database = getDatabase(app);
 //const fetcher = (url) => fetch(url).then((res) => res.json())
 
 export default function Home() {
-  const formatDate = (dateString) => {
-    const minute = Math.floor((dateString / 1000 / 60) % 60);
-    const seconds = Math.floor((dateString / 1000) % 60);
-    return minute + ' mins ' + seconds + ' sec';
-  }
 
+  const [currentLap, setLap] = useState([]);
+  const [parent, enableAnimations] = useAutoAnimate(/* optional config */)
   const startTimeRef = query(ref(database, 'startTimestamp'));
-  const [startTimestamp, setStartTime] = useState([]);
-  useEffect(() => {
-    ref(database, 'startTimestamp');
-    onValue(startTimeRef, (snapshot) => {
-      const data = snapshot.val();
-      setStartTime(data.timestamp);
-    });
-  })
+ 
 
   const { colorMode, toggleColorMode } = useColorMode()
   // const { data, error } = useSWR('/api/user', fetcher)
   const dataRef = query(ref(database, 'racers'));
+
   // onValue(dataRef, (snapshot) => {
   //   const data = snapshot.val();
   //   //updateStarCount(postElement, data);
@@ -78,15 +67,33 @@ export default function Home() {
     onValue(dataRef, (snapshot) => {
       const result = snapshot.val();
       const list = Object.values(result).sort(function (x, y) { return y.checkpoint - x.checkpoint || x.timestamp - y.timestamp; });
+      const updates = {}
       for (let a = 0; a < list.length; a++) {
         var difference = Math.abs(list[a].timestamp - startTimestamp);
         list[a].timestamp = Math.floor((difference / 1000) / 60);
+        if (list[a].checkpoint == 4) {
+          list[a].lap += 1;
+          const ckey = list[a].key
+          set(ref(database, 'racers/' + ckey + 'lap')), {
+            lap: list[a].lap
+          };
+        }
       }
       setData(list);
+    }
+    );
+  })
+
+  const [startTimestamp, setStartTime] = useState(1);
+  useEffect(() => {
+    ref(database, 'startTimestamp');
+    onValue(startTimeRef, (snapshot) => {
+      const data = snapshot.val();
+      setStartTime(data.timestamp);
     });
   })
 
-  const MotionFlex = motion(Tr);
+
   // if (error) return <div>Failed to load</div>
   if (!data) {
     return (
@@ -100,23 +107,26 @@ export default function Home() {
   // Sort the leaderboard data in descending order based on the score
   //const sortedLeaderboard = leaderboard.sort((a, b) => b.score - a.score);
   return (
-    <div className={styles.container}>
+
+    <div className={styles.container} >
+
       <Head>
-        <title>RFID Race Leaderboard</title>
+        <title>RFID Leaderboard</title>
         <meta name="description" content="RFID Race Leaderboard" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <main className={styles.main}>
-        <IconButton onClick={toggleColorMode}>{colorMode === 'light' ? <MoonIcon /> : <SunIcon />}</IconButton>
-        <Image
-          boxSize="300px"
-          src={colorMode === 'light' ? '/Front Logo.png' : '/Front Logo.png'}
-          objectFit='cover'
-          alt="Devtoberfest logo"
-        />
-        <Stopwatch />
-        <h1 className={styles.title}>RFID Race Leaderboard</h1>
+      <main>
+        <VStack>
+          <IconButton onClick={toggleColorMode}>{colorMode === 'light' ? <MoonIcon /> : <SunIcon />}</IconButton>
+          <Image
+            boxSize="150px"
+            src={colorMode === 'light' ? '/Front Logo.png' : '/Front Logo.png'}
+            objectFit='cover'
+            alt="enduropark logo"
+          />
+          <Stopwatch />
+        </VStack>
+        <h1 className={styles.title}>RFID Leaderboard</h1>
         <Divider />
         <Table variant="striped" size="sm">
 
@@ -129,20 +139,60 @@ export default function Home() {
               <Th>CP Time</Th>
             </Tr>
           </Thead>
-          <Tbody>
+          <Tbody ref={parent}>
             {data.map((user, index) => (
               <Tr key={user.name}>
                 <Td>{++index}</Td>
                 <Td>{user.name}</Td>
                 <Td>
-                  <RadioGroup>
-                    <Stack direction='row'>
-                      <Radio isReadOnly='true'  isChecked={user.checkpoint >= 1 ? true : false} />
-                      <Radio isReadOnly='true'  isChecked={(user.checkpoint >= 2) ? true : false} />
-                      <Radio isReadOnly='true'  isChecked={(user.checkpoint >= 3) ? true : false} />
-                      <Radio isReadOnly='true'  isChecked={user.checkpoint >= 4 ? true : false} />
-                    </Stack>
-                  </RadioGroup>
+                  <ProgressBar percent={(() => {
+                    switch (user.checkpoint) {
+                      case 1:
+                        return 1;
+                      case 2:
+                        return 35;
+                      case 3:
+                        return 70;
+                      case 4:
+                        return 100;
+                    }
+                  })()}>
+                    <Step transition="scale">
+                      {({ accomplished, index }) => (
+                        <div>
+                          {accomplished ? <CheckCircleIcon /> : null}
+                        </div>
+                      )}
+                    </Step>
+                    <Step transition="scale">
+                      {({ accomplished, index }) => (
+                        <div
+                          className={`indexedStep ${accomplished ? CheckCircleIcon : null}`}
+                        >
+                          {accomplished ? <CheckCircleIcon /> : null}
+                        </div>
+                      )}
+                    </Step>
+                    <Step transition="scale">
+                      {({ accomplished, index }) => (
+                        <div
+                          className={`indexedStep ${accomplished ? CheckCircleIcon : null}`}
+                        >
+                          {accomplished ? <CheckCircleIcon /> : null}
+                        </div>
+                      )}
+                    </Step>
+
+                    <Step transition="scale">
+                      {({ accomplished, index }) => (
+                        <div
+                          className={`indexedStep ${accomplished ? "accomplished" : null}`}
+                        >
+                          {accomplished ? <CheckCircleIcon /> : null}
+                        </div>
+                      )}
+                    </Step>
+                  </ProgressBar>
                 </Td>
                 <Td>{user.checkpoint}</Td>
                 <Td>{user.timestamp}</Td>
@@ -160,28 +210,15 @@ export default function Home() {
           </Tfoot>
         </Table>
       </main>
-
       <footer className={styles.footer}>
         <Text>
-          Made with ❤,{' '}
-          <Link href="https://nextjs.org" isExternal>
-            Next.JS
-            <ExternalLinkIcon mx="2px" />
-          </Link>
-          ,{' '}
-          <Link href="https://chakra-ui.com" isExternal>
-            the Chakra Design system
-            <ExternalLinkIcon mx="2px" />
-          </Link>{' '}
-          and a lot of ☕ coffee!
+          mimdal
         </Text>
       </footer>
     </div>
+
   )
 }
-
-
-
 const Stopwatch = () => {
 
   function writeStartTime() {
@@ -247,3 +284,6 @@ const Stopwatch = () => {
     </div>
   );
 };
+
+
+
