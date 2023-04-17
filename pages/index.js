@@ -138,8 +138,8 @@ export default function Home() {
                   <RadioGroup>
                     <Stack direction='row'>
                       <Radio isReadOnly='true'  isChecked={user.checkpoint >= 1 ? true : false} />
-                      <Radio isReadOnly='true'  isChecked={(user.checkpoint >= 2) ? 'true' : 'false'} />
-                      <Radio isReadOnly='true'  isChecked={(user.checkpoint >= 3) ? 'true' : 'false'} />
+                      <Radio isReadOnly='true'  isChecked={(user.checkpoint >= 2) ? true : false} />
+                      <Radio isReadOnly='true'  isChecked={(user.checkpoint >= 3) ? true : false} />
                       <Radio isReadOnly='true'  isChecked={user.checkpoint >= 4 ? true : false} />
                     </Stack>
                   </RadioGroup>
