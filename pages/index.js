@@ -74,9 +74,9 @@ export default function Home() {
         if (list[a].checkpoint == 4) {
           list[a].lap += 1;
           const ckey = list[a].key
-          set(ref(database, 'racers/' + ckey + 'lap')), {
-            lap: list[a].lap
-          };
+          // set(ref(database, 'racers/' + ckey + 'lap')), {
+          //   lap: list[a].lap
+          // };
         }
       }
       setData(list);
