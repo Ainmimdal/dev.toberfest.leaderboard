@@ -1,25 +1,21 @@
 import React, { Suspense, useEffect, useState } from "react";
-import useSWR from 'swr'
 import Head from 'next/head'
-import { Center, Button, Link, RadioGroup, Radio, ChakraProvider } from '@chakra-ui/react'
+import { Center, Button, Link, RadioGroup, Radio, ChakraProvider, Flex } from '@chakra-ui/react'
 import { Stack, HStack, VStack } from '@chakra-ui/react'
 import { ExternalLinkIcon } from '@chakra-ui/icons'
 import { Spinner } from '@chakra-ui/react'
 import { Image } from '@chakra-ui/react'
 import { Text } from '@chakra-ui/react'
-import { Divider } from '@chakra-ui/react'
+import { Divider ,Spacer,Box} from '@chakra-ui/react'
 import { Table, Thead, Tbody, Tfoot, Tr, Th, Td, TableCaption } from '@chakra-ui/react'
 import { IconButton } from '@chakra-ui/react'
 import { MoonIcon, SunIcon, CheckCircleIcon } from '@chakra-ui/icons'
 import { useColorMode } from '@chakra-ui/react'
 import styles from '../styles/Home.module.css'
-import FlipMove from "react-flip-move";
 import { FirebaseApp } from "firebase/app";
 import { initializeApp, increment, firebase } from "firebase/app";
 import { getDatabase, ref, query, orderByChild, onValue, orderByValue, set } from "firebase/database";
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-import "react-step-progress-bar/styles.css";
-import { ProgressBar, Step } from "react-step-progress-bar";
 
 // // TODO: Replace the following with your app's Firebase project configuration
 // // See: https://firebase.google.com/docs/web/learn-more#config-object
@@ -50,7 +46,6 @@ export default function Home() {
 
   const [currentLap, setLap] = useState([]);
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */)
-  const startTimeRef = query(ref(database, 'startTimestamp'));
  
 
   const { colorMode, toggleColorMode } = useColorMode()
@@ -64,34 +59,51 @@ export default function Home() {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    onValue(dataRef, (snapshot) => {
-      const result = snapshot.val();
-      const list = Object.values(result).sort(function (x, y) { return y.checkpoint - x.checkpoint || x.timestamp - y.timestamp; });
-      const updates = {}
-      for (let a = 0; a < list.length; a++) {
-        var difference = Math.abs(list[a].timestamp - startTimestamp);
-        list[a].timestamp = Math.floor((difference / 1000) / 60);
-        if (list[a].checkpoint == 4) {
-          list[a].lap += 1;
-          const ckey = list[a].key
-          // set(ref(database, 'racers/' + ckey + 'lap')), {
-          //   lap: list[a].lap
-          // };
-        }
-      }
-      setData(list);
-    }
-    );
-  })
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const racersRef = ref(db, 'racers');
 
-  const [startTimestamp, setStartTime] = useState(1);
-  useEffect(() => {
-    ref(database, 'startTimestamp');
-    onValue(startTimeRef, (snapshot) => {
-      const data = snapshot.val();
-      setStartTime(data.timestamp);
+    const unsubscribe = onValue(racersRef, (snapshot) => {
+      const racersData = snapshot.val();
+      const racersArray = Object.keys(racersData || {}).map((key) => ({
+        ...racersData[key],
+        rfid: key,
+      }));
+
+      racersArray.sort((a, b) => {
+        if (a.lap !== b.lap) {
+          return b.lap - a.lap; // Sort by descending lap count
+        } else if (a.lapTime !== b.lapTime) {
+          return a.lapTime - b.lapTime; // Sort by ascending lap time
+        } else if (a.checkpoint !== b.checkpoint) {
+          return b.checkpoint - a.checkpoint; // Sort by descending checkpoint count
+        } else {
+          return a.timestamp - b.timestamp; // Sort by ascending checkpoint time
+        }
+      });
+
+
+      setData(racersArray);
     });
-  })
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const [startTimestamp, setStartTime] = useState(null);
+  useEffect(() => {
+    const databaseRef = ref(database, 'startTimestamp/timestamp');
+    const unsubscribe=onValue(databaseRef, (snapshot) => {
+      setStartTime(snapshot.val());
+    });
+
+    // Return a cleanup function to remove the listener when the component unmounts
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
 
 
   // if (error) return <div>Failed to load</div>
@@ -107,16 +119,14 @@ export default function Home() {
   // Sort the leaderboard data in descending order based on the score
   //const sortedLeaderboard = leaderboard.sort((a, b) => b.score - a.score);
   return (
-
-    <div className={styles.container} >
-
-      <Head>
-        <title>RFID Leaderboard</title>
-        <meta name="description" content="RFID Race Leaderboard" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main>
-        <VStack>
+<Box w='100%' h='100%' overflowX="auto">
+    <Flex 
+    flexDirection={"column"} 
+    justify={"center"}
+    align={"center"}>
+       
+        <Spacer />
+        
           <IconButton onClick={toggleColorMode}>{colorMode === 'light' ? <MoonIcon /> : <SunIcon />}</IconButton>
           <Image
             boxSize="150px"
@@ -125,77 +135,37 @@ export default function Home() {
             alt="enduropark logo"
           />
           <Stopwatch />
-        </VStack>
+      
         <h1 className={styles.title}>RFID Leaderboard</h1>
+        
         <Divider />
+        </Flex>
         <Table variant="striped" size="sm">
-
           <Thead>
             <Tr>
               <Th>Rank</Th>
               <Th>Racer</Th>
               <Th>Checkpoint</Th>
+              <Th>Checkpoint time</Th>
               <Th>Lap</Th>
-              <Th>CP Time</Th>
+              <Th>Lap Time</Th>
             </Tr>
           </Thead>
           <Tbody ref={parent}>
             {data.map((user, index) => (
-              <Tr key={user.name}>
+              <Tr key={index}>
                 <Td>{++index}</Td>
                 <Td>{user.name}</Td>
                 <Td>
-                  <ProgressBar percent={(() => {
-                    switch (user.checkpoint) {
-                      case 1:
-                        return 1;
-                      case 2:
-                        return 35;
-                      case 3:
-                        return 70;
-                      case 4:
-                        return 100;
-                    }
-                  })()}>
-                    <Step transition="scale">
-                      {({ accomplished, index }) => (
-                        <div>
-                          {accomplished ? <CheckCircleIcon /> : null}
-                        </div>
-                      )}
-                    </Step>
-                    <Step transition="scale">
-                      {({ accomplished, index }) => (
-                        <div
-                          className={`indexedStep ${accomplished ? CheckCircleIcon : null}`}
-                        >
-                          {accomplished ? <CheckCircleIcon /> : null}
-                        </div>
-                      )}
-                    </Step>
-                    <Step transition="scale">
-                      {({ accomplished, index }) => (
-                        <div
-                          className={`indexedStep ${accomplished ? CheckCircleIcon : null}`}
-                        >
-                          {accomplished ? <CheckCircleIcon /> : null}
-                        </div>
-                      )}
-                    </Step>
-
-                    <Step transition="scale">
-                      {({ accomplished, index }) => (
-                        <div
-                          className={`indexedStep ${accomplished ? "accomplished" : null}`}
-                        >
-                          {accomplished ? <CheckCircleIcon /> : null}
-                        </div>
-                      )}
-                    </Step>
-                  </ProgressBar>
+                  <StepProgressIndicator currentStep={user.checkpoint}>
+                  </StepProgressIndicator>
                 </Td>
+                <Td>
+                  <TimeDifference startTime={startTimestamp} endTime={user.timestamp}>
+                    </TimeDifference></Td>
                 <Td>{user.lap}</Td>
-                <Td>{user.timestamp}</Td>
+                <Td><TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
+                    </TimeDifference></Td>
               </Tr>
             ))}
           </Tbody>
@@ -204,21 +174,71 @@ export default function Home() {
               <Th>Rank</Th>
               <Th>Racer</Th>
               <Th>Checkpoint</Th>
+              <Th>Checkpoint time</Th>
               <Th>Lap</Th>
-              <Th>CP Time</Th>
+              <Th>Lap Time</Th>
             </Tr>
           </Tfoot>
         </Table>
-      </main>
-      <footer className={styles.footer}>
-        <Text>
-          mimdal
-        </Text>
-      </footer>
-    </div>
-
+       
+    </Box>
   )
 }
+
+const StepProgressIndicator = ({ currentStep }) => {
+  const steps = [1, 2, 3, 4];
+  return (
+    <div style={{ display: 'flex' }}>
+      {steps.map((step) => (
+        <div
+          key={step}
+          style={{
+            height: '10px',
+            width: '25%',
+            backgroundColor: step <= currentStep ? 'darkorange' : 'lightgray',
+            margin: '0 2px',
+            borderRadius: '3px',
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const TimeDifference = ({ startTime, endTime }) => {
+  // Parse the start and checkpoint times as Date objects
+  const startDate = new Date(startTime);
+  const checkpointDate = new Date(endTime);
+
+  // Check that the start and checkpoint times are valid
+  if (isNaN(startDate.getTime()) || isNaN(checkpointDate.getTime())) {
+    console.log('Invalid start or checkpoint time');
+    return <span>N/A</span>;
+  }
+
+  // Calculate the time difference between the checkpoint time and the race start time
+  const timeDifference = checkpointDate.getTime() - startDate.getTime();
+
+  // Check that the checkpoint time is after the start time
+  if (timeDifference < 0) {
+    console.log('Checkpoint time is before start time');
+    return <span>N/A</span>;
+  }
+
+  // Convert the time difference to minutes and seconds
+  const minutes = Math.floor(timeDifference / 60000);
+  const seconds = ((timeDifference % 60000) / 1000).toFixed(0);
+
+  // Return the time difference in minutes and seconds format
+  return (
+    <span>
+      {`${Math.abs(minutes).toString().padStart(2, '0')}:${Math.abs(seconds).toString().padStart(2, '0')}`}
+    </span>
+  );
+};
+
+
+
 const Stopwatch = () => {
 
   function writeStartTime() {
