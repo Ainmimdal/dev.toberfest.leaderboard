@@ -70,14 +70,16 @@ export default function Home() {
       }));
 
       racersArray.sort((a, b) => {
-        if (a.lap !== b.lap) {
-          return b.lap - a.lap; // Sort by descending lap count
-        } else if (a.lapTime !== b.lapTime) {
-          return a.lapTime - b.lapTime; // Sort by ascending lap time
-        } else if (a.checkpoint !== b.checkpoint) {
-          return b.checkpoint - a.checkpoint; // Sort by descending checkpoint count
+        if (parseInt(b.lap) - parseInt(a.lap) !== 0) {
+          return parseInt(b.lap) - parseInt(a.lap); // Sort by descending lap count
+        } else if (a.lapTime === undefined || b.lapTime === undefined) {
+          return a.lapTime === undefined ? 1 : -1; // Sort racers without lap time after racers with lap time
+        } else if (parseFloat(a.lapTime) - parseFloat(b.lapTime) !== 0) {
+          return parseFloat(a.lapTime) - parseFloat(b.lapTime); // Sort by ascending lap time
+        } else if (parseInt(b.checkpoint) - parseInt(a.checkpoint) !== 0) {
+          return parseInt(b.checkpoint) - parseInt(a.checkpoint); // Sort by descending checkpoint count
         } else {
-          return a.timestamp - b.timestamp; // Sort by ascending checkpoint time
+          return a.timestamp - b.timestamp; // Sort by ascending timestamp
         }
       });
 
