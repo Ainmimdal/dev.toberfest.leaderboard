@@ -44,7 +44,6 @@ const database = getDatabase(app);
 
 export default function Home() {
 
-  const [currentLap, setLap] = useState([]);
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */)
  
 
