@@ -6,7 +6,7 @@ import { ExternalLinkIcon } from '@chakra-ui/icons'
 import { Spinner } from '@chakra-ui/react'
 import { Image } from '@chakra-ui/react'
 import { Text } from '@chakra-ui/react'
-import { Divider ,Spacer,Box} from '@chakra-ui/react'
+import { Divider, Spacer, Box } from '@chakra-ui/react'
 import { Table, Thead, Tbody, Tfoot, Tr, Th, Td, TableCaption } from '@chakra-ui/react'
 import { IconButton } from '@chakra-ui/react'
 import { MoonIcon, SunIcon, CheckCircleIcon } from '@chakra-ui/icons'
@@ -45,7 +45,7 @@ const database = getDatabase(app);
 export default function Home() {
 
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */)
- 
+
 
   const { colorMode, toggleColorMode } = useColorMode()
   // const { data, error } = useSWR('/api/user', fetcher)
@@ -69,20 +69,75 @@ export default function Home() {
         rfid: key,
       }));
 
+      // racersArray.sort((a, b) => {
+      //   if (parseInt(b.lap) - parseInt(a.lap) !== 0) {
+      //     return parseInt(b.lap) - parseInt(a.lap); // Sort by descending lap count
+      //   } else if (a.lapTime === undefined || b.lapTime === undefined) {
+      //     return a.lapTime === undefined ? 1 : -1; // Sort racers without lap time after racers with lap time
+      //   } else if (parseFloat(a.lapTime) - parseFloat(b.lapTime) !== 0) {
+      //     return parseFloat(a.lapTime) - parseFloat(b.lapTime); // Sort by ascending lap time
+      //   } else if (parseInt(b.checkpoint) - parseInt(a.checkpoint) !== 0) {
+      //     return parseInt(b.checkpoint) - parseInt(a.checkpoint); // Sort by descending checkpoint count
+      //   } else {
+      //     return a.timestamp - b.timestamp; // Sort by ascending timestamp
+      //   }
+      // });
+
+      
+
       racersArray.sort((a, b) => {
-        if (parseInt(b.lap) - parseInt(a.lap) !== 0) {
-          return parseInt(b.lap) - parseInt(a.lap); // Sort by descending lap count
-        } else if (a.lapTime === undefined || b.lapTime === undefined) {
-          return a.lapTime === undefined ? 1 : -1; // Sort racers without lap time after racers with lap time
-        } else if (parseFloat(a.lapTime) - parseFloat(b.lapTime) !== 0) {
-          return parseFloat(a.lapTime) - parseFloat(b.lapTime); // Sort by ascending lap time
-        } else if (parseInt(b.checkpoint) - parseInt(a.checkpoint) !== 0) {
-          return parseInt(b.checkpoint) - parseInt(a.checkpoint); // Sort by descending checkpoint count
-        } else {
-          return a.timestamp - b.timestamp; // Sort by ascending timestamp
+        // Compare lap count
+        const lapDiff = parseInt(b.lap) - parseInt(a.lap);
+        if (lapDiff !== 0) {
+          return lapDiff;
         }
+
+        // If lap count is the same, compare lap time
+        if (a.lapTime === undefined || b.lapTime === undefined) {
+          return a.lapTime === undefined ? 1 : -1; // Sort racers without lap time after racers with lap time
+        } else {
+          const lapTimeDiff = parseFloat(a.lapTime) - parseFloat(b.lapTime);
+          if (lapTimeDiff !== 0) {
+            return lapTimeDiff;
+          }
+        }
+
+        // If lap time is the same, compare checkpoint count
+        const checkpointDiff = parseInt(b.checkpoint) - parseInt(a.checkpoint);
+        if (checkpointDiff !== 0) {
+          return checkpointDiff;
+        }
+
+        // If checkpoint count is the same, compare timestamp
+        return a.timestamp - b.timestamp;
       });
 
+      // Find the first-place racer and their lap count and lap time
+      const firstPlaceRacer = racersArray[0];
+      const firstPlaceLap = parseInt(firstPlaceRacer.lap);
+      const firstPlaceLapTime = parseFloat(firstPlaceRacer.lapTime);
+
+
+      
+
+      for (let i = 0; i < racersArray.length; i++) {
+        // if (racersArray[i].hasOwnProperty('name')) {
+          
+        // } else {
+        //   racersArray.splice(i, 1);
+        //   console.log(`racersArray[${i}] does not have a property called "name"`);
+        // }
+        if (!racersArray[i].name) {
+          racersArray.splice(i, 1);
+        }
+
+        if (racersArray[i].lap === firstPlaceLap) {
+          racersArray[i].gap = '+' + (racersArray[i].lapTime - firstPlaceLapTime).toFixed(3);
+        } else {
+          racersArray[i].gap = `${firstPlaceLap - racersArray[i].lap} lap(s)`;
+        }
+   
+      }
 
       setData(racersArray);
     });
@@ -95,7 +150,7 @@ export default function Home() {
   const [startTimestamp, setStartTime] = useState(null);
   useEffect(() => {
     const databaseRef = ref(database, 'startTimestamp/timestamp');
-    const unsubscribe=onValue(databaseRef, (snapshot) => {
+    const unsubscribe = onValue(databaseRef, (snapshot) => {
       setStartTime(snapshot.val());
     });
 
@@ -120,68 +175,77 @@ export default function Home() {
   // Sort the leaderboard data in descending order based on the score
   //const sortedLeaderboard = leaderboard.sort((a, b) => b.score - a.score);
   return (
-<Box w='100%' h='100%' overflowX="auto">
-    <Flex 
-    flexDirection={"column"} 
-    justify={"center"}
-    align={"center"}>
-       
+    <Box w='100%' h='100%' overflowX="auto">
+      <Flex
+        flexDirection={"column"}
+        justify={"center"}
+        align={"center"}>
+
         <Spacer />
-        
-          <IconButton onClick={toggleColorMode}>{colorMode === 'light' ? <MoonIcon /> : <SunIcon />}</IconButton>
-          <Image
-            boxSize="150px"
-            src={colorMode === 'light' ? '/Front Logo.png' : '/Front Logo.png'}
-            objectFit='cover'
-            alt="enduropark logo"
-          />
-          <Stopwatch />
-      
+
+        <IconButton onClick={toggleColorMode}>{colorMode === 'light' ? <MoonIcon /> : <SunIcon />}</IconButton>
+        <Image
+          boxSize="150px"
+          src={colorMode === 'light' ? '/Front Logo.png' : '/Front Logo.png'}
+          objectFit='cover'
+          alt="enduropark logo"
+        />
+        <Stopwatch />
+
         <h1 className={styles.title}>RFID Leaderboard</h1>
-        
+
         <Divider />
-        </Flex>
-        <Table variant="striped" size="sm">
-          <Thead>
-            <Tr>
-              <Th>Rank</Th>
-              <Th>Racer</Th>
-              <Th>Checkpoint</Th>
-              <Th>Checkpoint time</Th>
-              <Th>Lap</Th>
-              <Th>Lap Time</Th>
+      </Flex>
+      <Table variant="striped" size="sm">
+        <Thead>
+          <Tr>
+            <Th>Rank</Th>
+            <Th>Rider</Th>
+            <Th>Bike</Th>
+            <Th>Nation</Th>
+            <Th>Checkpoint</Th>
+            <Th>Checkpoint time</Th>
+            <Th>Lap</Th>
+            <Th>Lap Time</Th>
+            <Th>Gap</Th>
+          </Tr>
+        </Thead>
+        <Tbody ref={parent}>
+          {data.map((user, index) => (
+            <Tr key={index}>
+              <Td>{++index}</Td>
+              <Td>{user.name}</Td>
+              <Td>{user.bike}</Td>
+              <Td>{user.nation}</Td>
+              <Td>
+                <StepProgressIndicator currentStep={user.checkpoint}>
+                </StepProgressIndicator>
+              </Td>
+              <Td>
+                <TimeDifference startTime={startTimestamp} endTime={user.timestamp}>
+                </TimeDifference></Td>
+              <Td>{user.lap}</Td>
+              <Td><TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
+              </TimeDifference></Td>
+              <Td>{user.gap}</Td>
             </Tr>
-          </Thead>
-          <Tbody ref={parent}>
-            {data.map((user, index) => (
-              <Tr key={index}>
-                <Td>{++index}</Td>
-                <Td>{user.name}</Td>
-                <Td>
-                  <StepProgressIndicator currentStep={user.checkpoint}>
-                  </StepProgressIndicator>
-                </Td>
-                <Td>
-                  <TimeDifference startTime={startTimestamp} endTime={user.timestamp}>
-                    </TimeDifference></Td>
-                <Td>{user.lap}</Td>
-                <Td><TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
-                    </TimeDifference></Td>
-              </Tr>
-            ))}
-          </Tbody>
-          <Tfoot>
-            <Tr>
-              <Th>Rank</Th>
-              <Th>Racer</Th>
-              <Th>Checkpoint</Th>
-              <Th>Checkpoint time</Th>
-              <Th>Lap</Th>
-              <Th>Lap Time</Th>
-            </Tr>
-          </Tfoot>
-        </Table>
-       
+          ))}
+        </Tbody>
+        <Tfoot>
+          <Tr>
+            <Th>Rank</Th>
+            <Th>Racer</Th>
+            <Th>Bike</Th>
+            <Th>Nation</Th>
+            <Th>Checkpoint</Th>
+            <Th>Checkpoint time</Th>
+            <Th>Lap</Th>
+            <Th>Lap Time</Th>
+            <Th>Gap</Th>
+          </Tr>
+        </Tfoot>
+      </Table>
+
     </Box>
   )
 }
