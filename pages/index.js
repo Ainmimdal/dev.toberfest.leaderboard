@@ -14,7 +14,7 @@ import { useColorMode } from '@chakra-ui/react'
 import styles from '../styles/Home.module.css'
 import { FirebaseApp } from "firebase/app";
 import { initializeApp, increment, firebase } from "firebase/app";
-import { getDatabase, ref, query, orderByChild, onValue, orderByValue, set } from "firebase/database";
+import { getDatabase, ref, query, orderByChild, onValue, orderByValue, set ,update} from "firebase/database";
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 
 // // TODO: Replace the following with your app's Firebase project configuration
@@ -149,7 +149,7 @@ export default function Home() {
 
   const [startTimestamp, setStartTime] = useState(null);
   useEffect(() => {
-    const databaseRef = ref(database, 'startTimestamp/timestamp');
+    const databaseRef = ref(database, 'startTimestamp');
     const unsubscribe = onValue(databaseRef, (snapshot) => {
       setStartTime(snapshot.val());
     });
@@ -190,7 +190,7 @@ export default function Home() {
           objectFit='cover'
           alt="enduropark logo"
         />
-        <Stopwatch />
+        <Stopwatch startTimestamp={startTimestamp}/>
 
         <h1 className={styles.title}>RFID Leaderboard</h1>
 
@@ -304,71 +304,131 @@ const TimeDifference = ({ startTime, endTime }) => {
 
 
 
-const Stopwatch = () => {
+// const Stopwatch = (serverTime) => {
 
-  function writeStartTime() {
+//   function writeStartTime() {
 
-    set(ref(database, 'startTimestamp'), {
-      timestamp: Date.now()
-    });
-  }
+//     set(ref(database, 'startTimestamp'), {
+//       timestamp: Date.now()
+//     });
+//   }
 
-  // state to store time
-  const [time, setTime] = useState(0);
+//   // state to store time
+//   const [time, setTime] = useState(0);
 
-  // state to check stopwatch running or not
+//   // state to check stopwatch running or not
+//   const [isRunning, setIsRunning] = useState(false);
+
+//   useEffect(() => {
+//     let intervalId;
+//     if (isRunning) {
+//       // setting time from 0 to 1 every 10 milisecond using javascript setInterval method
+//       intervalId = setInterval(() => setTime(time + 1), 10);
+//     }
+//     return () => clearInterval(intervalId);
+//   }, [isRunning, time]);
+
+//   // Hours calculation
+//   const hours = Math.floor(time / 360000);
+
+//   // Minutes calculation
+//   const minutes = Math.floor((time % 360000) / 6000);
+
+//   // Seconds calculation
+//   const seconds = Math.floor((time % 6000) / 100);
+
+//   // Milliseconds calculation
+//   const milliseconds = time % 100;
+
+//   // Method to start and stop timer
+//   const startAndStop = () => {
+//     setIsRunning(!isRunning);
+//     if (!isRunning) {
+//       writeStartTime();
+//     } else {
+//       { reset }
+//     }
+//   };
+
+//   // Method to reset timer back to 0
+//   const reset = () => {
+//     setTime(0);
+//   };
+//   return (
+//     <div className="stopwatch-container">
+//       <p className="stopwatch-time">
+//         {hours}:{minutes.toString().padStart(2, "0")}:
+//         {seconds.toString().padStart(2, "0")}:
+//         {milliseconds.toString().padStart(2, "0")}
+//       </p>
+//       <div className="stopwatch-buttons">
+//         <Button className="stopwatch-button" onClick={startAndStop} colorScheme={isRunning ? "red" : "green"}>
+//           {isRunning ? "Stop" : "Start"}
+//         </Button>
+//       </div>
+//     </div>
+//   );
+// };
+
+function Stopwatch(props) {
+  const { startTimestamp } = props;
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    if (startTimestamp) {
+      setIsRunning(true);
+      setElapsedTime(Date.now() - startTimestamp);
+    }
+  }, [startTimestamp]);
 
   useEffect(() => {
     let intervalId;
     if (isRunning) {
-      // setting time from 0 to 1 every 10 milisecond using javascript setInterval method
-      intervalId = setInterval(() => setTime(time + 1), 10);
+      intervalId = setInterval(() => {
+        setElapsedTime((prevElapsedTime) => prevElapsedTime + 10);
+      }, 10);
     }
-    return () => clearInterval(intervalId);
-  }, [isRunning, time]);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isRunning]);
 
-  // Hours calculation
-  const hours = Math.floor(time / 360000);
-
-  // Minutes calculation
-  const minutes = Math.floor((time % 360000) / 6000);
-
-  // Seconds calculation
-  const seconds = Math.floor((time % 6000) / 100);
-
-  // Milliseconds calculation
-  const milliseconds = time % 100;
-
-  // Method to start and stop timer
-  const startAndStop = () => {
-    setIsRunning(!isRunning);
-    if (!isRunning) {
-      writeStartTime();
-    } else {
-      { reset }
-    }
+  const handleStart = () => {
+    const timestamp = Date.now();
+    update(ref(getDatabase()), { startTimestamp: timestamp })
+      .then(() => {
+        setIsRunning(true);
+        setElapsedTime(0);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
 
-  // Method to reset timer back to 0
-  const reset = () => {
-    setTime(0);
+  const handleReset = () => {
+    update(ref(getDatabase()), { startTimestamp: null })
+      .then(() => {
+        setIsRunning(false);
+        setElapsedTime(0);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60000);
+    const seconds = Math.floor((time % 60000) / 1000);
+    const milliseconds = Math.floor((time % 1000) / 10);
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}:${String(milliseconds).padStart(2, "0")}`;
+  };
+
   return (
-    <div className="stopwatch-container">
-      <p className="stopwatch-time">
-        {hours}:{minutes.toString().padStart(2, "0")}:
-        {seconds.toString().padStart(2, "0")}:
-        {milliseconds.toString().padStart(2, "0")}
-      </p>
-      <div className="stopwatch-buttons">
-        <Button className="stopwatch-button" onClick={startAndStop} colorScheme={isRunning ? "red" : "green"}>
-          {isRunning ? "Stop" : "Start"}
-        </Button>
-      </div>
+    <div>
+      <div>{formatTime(elapsedTime)}</div>
+      {!isRunning ? <button onClick={handleStart}>Start</button> : null}
+      {isRunning ? <button onClick={handleReset}>Reset</button> : null}
     </div>
   );
-};
-
-
-
+}
