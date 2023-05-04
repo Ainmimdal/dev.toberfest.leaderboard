@@ -14,7 +14,7 @@ import { useColorMode } from '@chakra-ui/react'
 import styles from '../styles/Home.module.css'
 import { FirebaseApp } from "firebase/app";
 import { initializeApp, increment, firebase } from "firebase/app";
-import { getDatabase, ref, query, orderByChild, onValue, orderByValue, set ,update} from "firebase/database";
+import { getDatabase, ref, query, orderByChild, onValue, orderByValue, set, update } from "firebase/database";
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 
 // // TODO: Replace the following with your app's Firebase project configuration
@@ -83,7 +83,7 @@ export default function Home() {
       //   }
       // });
 
-      
+
 
       racersArray.sort((a, b) => {
         // Compare lap count
@@ -118,11 +118,11 @@ export default function Home() {
       const firstPlaceLapTime = parseFloat(firstPlaceRacer.lapTime);
 
 
-      
+
 
       for (let i = 0; i < racersArray.length; i++) {
         // if (racersArray[i].hasOwnProperty('name')) {
-          
+
         // } else {
         //   racersArray.splice(i, 1);
         //   console.log(`racersArray[${i}] does not have a property called "name"`);
@@ -136,7 +136,7 @@ export default function Home() {
         } else {
           racersArray[i].gap = `${firstPlaceLap - racersArray[i].lap} lap(s)`;
         }
-   
+
       }
 
       setData(racersArray);
@@ -190,7 +190,7 @@ export default function Home() {
           objectFit='cover'
           alt="enduropark logo"
         />
-        <Stopwatch startTimestamp={startTimestamp}/>
+        <Stopwatch startTimestamp={startTimestamp} />
 
         <h1 className={styles.title}>RFID Leaderboard</h1>
 
@@ -200,13 +200,8 @@ export default function Home() {
         <Thead>
           <Tr>
             <Th>Rank</Th>
-            <Th>Rider</Th>
-            <Th>Bike</Th>
-            <Th>Nation</Th>
-            <Th>Checkpoint</Th>
-            <Th>Checkpoint time</Th>
-            <Th>Lap</Th>
-            <Th>Lap Time</Th>
+            <Th>Rider /{"\n"} Checkpoint</Th>
+            <Th>Last Lap Time /{"\n"} Lap</Th>
             <Th>Gap</Th>
           </Tr>
         </Thead>
@@ -214,19 +209,19 @@ export default function Home() {
           {data.map((user, index) => (
             <Tr key={index}>
               <Td>{++index}</Td>
-              <Td>{user.name}</Td>
-              <Td>{user.bike}</Td>
-              <Td>{user.nation}</Td>
               <Td>
+                {user.name}
                 <StepProgressIndicator currentStep={user.checkpoint}>
                 </StepProgressIndicator>
               </Td>
               <Td>
-                <TimeDifference startTime={startTimestamp} endTime={user.timestamp}>
-                </TimeDifference></Td>
-              <Td>{user.lap}</Td>
-              <Td><TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
-              </TimeDifference></Td>
+                <Box>
+                  <TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
+                  </TimeDifference>
+                  <Text>
+                    {user.lap} laps
+                  </Text>
+                </Box></Td>
               <Td>{user.gap}</Td>
             </Tr>
           ))}
@@ -234,13 +229,8 @@ export default function Home() {
         <Tfoot>
           <Tr>
             <Th>Rank</Th>
-            <Th>Racer</Th>
-            <Th>Bike</Th>
-            <Th>Nation</Th>
-            <Th>Checkpoint</Th>
-            <Th>Checkpoint time</Th>
-            <Th>Lap</Th>
-            <Th>Lap Time</Th>
+            <Th>Rider /{"\n"} Checkpoint</Th>
+            <Th>Last Lap Time /{"\n"} Lap</Th>
             <Th>Gap</Th>
           </Tr>
         </Tfoot>
