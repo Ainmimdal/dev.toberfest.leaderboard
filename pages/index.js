@@ -151,7 +151,8 @@ export default function Home() {
   // Sort the leaderboard data in descending order based on the score
   //const sortedLeaderboard = leaderboard.sort((a, b) => b.score - a.score);
   return (
-    <Box w='100%' h='100%' overflowX="auto">
+    <Box w='100%' minHeight='100vh' overflowX="auto" backgroundImage="url('/grid pattern.svg')" bgPosition="center"
+    bgRepeat="no-repeat" bgSize="cover">
       <Flex
         flexDirection="column"
         justify="center"
@@ -159,26 +160,27 @@ export default function Home() {
 
         <Spacer />
 
-        <IconButton onClick={toggleColorMode}>{colorMode === 'light' ? <MoonIcon /> : <SunIcon />}</IconButton>
+        {/* <IconButton onClick={toggleColorMode}>{colorMode === 'light' ? <MoonIcon /> : <SunIcon />}</IconButton> */}
         <Image
           boxSize="150px"
           src={colorMode === 'light' ? '/Front Logo.png' : '/Front Logo.png'}
           objectFit='cover'
           alt="enduropark logo"
+          marginTop="20px"
         />
         <Stopwatch startTimestamp={startTimestamp} />
 
-        <h1 className={styles.title}>RFID Leaderboard</h1>
+        <h1 className={styles.title}>AdvX Race Leaderboard</h1>
 
         <Divider />
       </Flex>
-      <Table variant="striped" size="sm">
+      <Table variant="striped" size="sm" colorScheme="gray">
         <Thead>
           <Tr>
             <Th>Rank</Th>
             <Th>Rider /{"\n"} Checkpoint</Th>
             <Th>Last Lap Time /{"\n"} Lap</Th>
-            <Th>Gap</Th>
+            <Th>Total Time /{"\n"}Gap</Th>
           </Tr>
         </Thead>
         <Tbody ref={parent}>
@@ -186,19 +188,32 @@ export default function Home() {
             <Tr key={index}>
               <Td>{++index}</Td>
               <Td>
+                <Box>
+                <Text>
                 {user.name}
+                </Text>
+                <Box marginTop='3px' marginBottom='2px'>
                 <StepProgressIndicator currentStep={user.checkpoint}>
                 </StepProgressIndicator>
+                </Box>
+                </Box>
               </Td>
               <Td>
                 <Box>
-                  <TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
+                  <TimeDifference startTime={user.lastLapTime} endTime={user.lapTime}>
                   </TimeDifference>
                   <Text>
                     {user.lap} laps
                   </Text>
                 </Box></Td>
-              <Td>{user.gap}</Td>
+              <Td>
+                <Box>
+                <TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
+                </TimeDifference>
+                <Text>
+                {user.gap}
+                </Text>
+                </Box></Td>
             </Tr>
           ))}
         </Tbody>
@@ -207,7 +222,7 @@ export default function Home() {
             <Th>Rank</Th>
             <Th>Rider /{"\n"} Checkpoint</Th>
             <Th>Last Lap Time /{"\n"} Lap</Th>
-            <Th>Gap</Th>
+            <Th>Total Time /{"\n"}Gap</Th>
           </Tr>
         </Tfoot>
       </Table>
@@ -237,8 +252,8 @@ const StepProgressIndicator = ({ currentStep }) => {
 };
 
 const TimeDifference = ({ startTime, endTime }) => {
- 
-  if(startTime === null){
+
+  if (startTime === null) {
     return <span>N/A</span>;
   }
   // Parse the start and checkpoint times as Date objects
@@ -272,6 +287,16 @@ const TimeDifference = ({ startTime, endTime }) => {
   );
 };
 
+const Time = ({ timestamp }) => {
+  const minutes = Math.floor(timestamp / 60000);
+  const seconds = ((timestamp % 60000) / 1000).toFixed(0);
+
+  return (
+    <span>
+      {`${Math.abs(minutes).toString().padStart(2, '0')}:${Math.abs(seconds).toString().padStart(2, '0')}`}
+    </span>
+  )
+}
 
 
 // const Stopwatch = (serverTime) => {
