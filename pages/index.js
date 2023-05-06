@@ -237,6 +237,10 @@ const StepProgressIndicator = ({ currentStep }) => {
 };
 
 const TimeDifference = ({ startTime, endTime }) => {
+ 
+  if(startTime === null){
+    return <span>N/A</span>;
+  }
   // Parse the start and checkpoint times as Date objects
   const startDate = new Date(startTime);
   const checkpointDate = new Date(endTime);
