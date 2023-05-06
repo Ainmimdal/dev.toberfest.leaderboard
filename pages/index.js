@@ -64,26 +64,12 @@ export default function Home() {
 
     const unsubscribe = onValue(racersRef, (snapshot) => {
       const racersData = snapshot.val();
-      const racersArray = Object.keys(racersData || {}).map((key) => ({
-        ...racersData[key],
-        rfid: key,
-      }));
-
-      // racersArray.sort((a, b) => {
-      //   if (parseInt(b.lap) - parseInt(a.lap) !== 0) {
-      //     return parseInt(b.lap) - parseInt(a.lap); // Sort by descending lap count
-      //   } else if (a.lapTime === undefined || b.lapTime === undefined) {
-      //     return a.lapTime === undefined ? 1 : -1; // Sort racers without lap time after racers with lap time
-      //   } else if (parseFloat(a.lapTime) - parseFloat(b.lapTime) !== 0) {
-      //     return parseFloat(a.lapTime) - parseFloat(b.lapTime); // Sort by ascending lap time
-      //   } else if (parseInt(b.checkpoint) - parseInt(a.checkpoint) !== 0) {
-      //     return parseInt(b.checkpoint) - parseInt(a.checkpoint); // Sort by descending checkpoint count
-      //   } else {
-      //     return a.timestamp - b.timestamp; // Sort by ascending timestamp
-      //   }
-      // });
-
-
+      const racersArray = Object.keys(racersData || {})
+        .filter(racerId => racersData[racerId].hasOwnProperty("name"))
+        .map(key => ({
+          ...racersData[key],
+          rfid: key,
+        }));
 
       racersArray.sort((a, b) => {
         // Compare lap count
@@ -121,22 +107,12 @@ export default function Home() {
 
 
       for (let i = 0; i < racersArray.length; i++) {
-        // if (racersArray[i].hasOwnProperty('name')) {
-
-        // } else {
-        //   racersArray.splice(i, 1);
-        //   console.log(`racersArray[${i}] does not have a property called "name"`);
-        // }
-        if (!racersArray[i].name) {
-          racersArray.splice(i, 1);
-        }
 
         if (racersArray[i].lap === firstPlaceLap) {
           racersArray[i].gap = '+' + (racersArray[i].lapTime - firstPlaceLapTime).toFixed(3);
         } else {
           racersArray[i].gap = `${firstPlaceLap - racersArray[i].lap} lap(s)`;
         }
-
       }
 
       setData(racersArray);
@@ -177,9 +153,9 @@ export default function Home() {
   return (
     <Box w='100%' h='100%' overflowX="auto">
       <Flex
-        flexDirection={"column"}
-        justify={"center"}
-        align={"center"}>
+        flexDirection="column"
+        justify="center"
+        align="center">
 
         <Spacer />
 
