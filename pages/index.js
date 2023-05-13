@@ -109,7 +109,12 @@ export default function Home() {
       for (let i = 0; i < racersArray.length; i++) {
 
         if (racersArray[i].lap === firstPlaceLap) {
-          racersArray[i].gap = '+' + (racersArray[i].lapTime - firstPlaceLapTime).toFixed(3);
+          const gapdiff=(racersArray[i].lapTime - firstPlaceLapTime);
+          // Convert the time difference to minutes and seconds
+  const hours = Math.floor(gapdiff/ 3600000);
+  const minutes = Math.floor((gapdiff %3600000)/60000);
+  const seconds = ((gapdiff% 60000) / 1000).toFixed(0);
+          racersArray[i].gap = '+' + hours + ':' + minutes + ':' + seconds;
         } else {
           racersArray[i].gap = `${firstPlaceLap - racersArray[i].lap} lap(s)`;
         }
