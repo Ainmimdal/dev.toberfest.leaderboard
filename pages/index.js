@@ -113,6 +113,7 @@ export default function Home() {
         } else {
           racersArray[i].gap = `${firstPlaceLap - racersArray[i].lap} lap(s)`;
         }
+
       }
 
       setData(racersArray);
@@ -211,7 +212,7 @@ export default function Home() {
                 <TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
                 </TimeDifference>
                 <Text>
-                <Time time={user.gap}></Time>
+                {user.gap}
                 </Text>
                 </Box></Td>
             </Tr>
@@ -277,7 +278,7 @@ const TimeDifference = ({ startTime, endTime }) => {
 
   // Convert the time difference to minutes and seconds
   const hours = Math.floor(timeDifference / 3600000);
-  const minutes = Math.floor(timeDifference % 60000);
+  const minutes = Math.floor((timeDifference / 3600000)/60000);
   const seconds = ((timeDifference % 60000) / 1000).toFixed(0);
 
   // Return the time difference in minutes and seconds format
@@ -290,7 +291,7 @@ const TimeDifference = ({ startTime, endTime }) => {
 
 const Time = ({ time }) => {
   const hours = Math.floor(time / 3600000);
-  const minutes = Math.floor((time % 3600000) / 60000);
+  const minutes = Math.floor((time /3600000) / 60000);
     const seconds = Math.floor((time % 60000) / 1000);
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
