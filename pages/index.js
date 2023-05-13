@@ -203,7 +203,7 @@ export default function Home() {
                   <TimeDifference startTime={user.lastLapTime} endTime={user.lapTime}>
                   </TimeDifference>
                   <Text>
-                    {user.lap} laps
+                  {user.lap} laps
                   </Text>
                 </Box></Td>
               <Td>
@@ -211,7 +211,7 @@ export default function Home() {
                 <TimeDifference startTime={startTimestamp} endTime={user.lapTime}>
                 </TimeDifference>
                 <Text>
-                {user.gap}
+                <Time time={user.gap}></Time>
                 </Text>
                 </Box></Td>
             </Tr>
@@ -232,7 +232,7 @@ export default function Home() {
 }
 
 const StepProgressIndicator = ({ currentStep }) => {
-  const steps = [1, 2, 3, 4];
+  const steps = [1, 2];
   return (
     <div style={{ display: 'flex' }}>
       {steps.map((step) => (
@@ -276,26 +276,23 @@ const TimeDifference = ({ startTime, endTime }) => {
   }
 
   // Convert the time difference to minutes and seconds
+  const hours = Math.floor(timeDifference / 3600000);
   const minutes = Math.floor(timeDifference / 60000);
   const seconds = ((timeDifference % 60000) / 1000).toFixed(0);
 
   // Return the time difference in minutes and seconds format
   return (
     <span>
-      {`${Math.abs(minutes).toString().padStart(2, '0')}:${Math.abs(seconds).toString().padStart(2, '0')}`}
+      {`${Math.abs(hours).toString().padStart(2, '0')}:${Math.abs(minutes).toString().padStart(2, '0')}:${Math.abs(seconds).toString().padStart(2, '0')}`}
     </span>
   );
 };
 
-const Time = ({ timestamp }) => {
-  const minutes = Math.floor(timestamp / 60000);
-  const seconds = ((timestamp % 60000) / 1000).toFixed(0);
-
-  return (
-    <span>
-      {`${Math.abs(minutes).toString().padStart(2, '0')}:${Math.abs(seconds).toString().padStart(2, '0')}`}
-    </span>
-  )
+const Time = ({ time }) => {
+  const hours = Math.floor(time / 3600000);
+    const minutes = Math.floor((time % 3600000) / 60000);
+    const seconds = Math.floor((time % 60000) / 1000);
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 
@@ -413,17 +410,15 @@ function Stopwatch(props) {
   };
 
   const formatTime = (time) => {
-    const minutes = Math.floor(time / 60000);
+    const hours = Math.floor(time / 3600000);
+    const minutes = Math.floor((time % 3600000) / 60000);
     const seconds = Math.floor((time % 60000) / 1000);
-    const milliseconds = Math.floor((time % 1000) / 10);
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}:${String(milliseconds).padStart(2, "0")}`;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   };
 
   return (
     <div>
       <div>{formatTime(elapsedTime)}</div>
-      {!isRunning ? <button onClick={handleStart}>Start</button> : null}
-      {isRunning ? <button onClick={handleReset}>Reset</button> : null}
     </div>
   );
 }
